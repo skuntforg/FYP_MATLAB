@@ -11,17 +11,18 @@ function [xt, yt, vx, vy, vr, Fa, Fr, Fd, Fx, Fy, rho_r] = apf(xt, yt, vx, vy, X
     disp(Fa)
     % Repulsive force (Fr)
     Fr = zeros(2,1);
-    for j=1:noo
+    if noo > 0
+        for j=1:noo
         
-         rho_r = sqrt((xo(j)-xt)^2+(yo(j)-yt)^2);
+            rho_r = sqrt((xo(j)-xt)^2+(yo(j)-yt)^2);
         
-         if (rho_r <= rho_0(j))
+            if (rho_r <= rho_0(j))
               %rho_r = sqrt((xo(i)-x)^2+(yo(i)-y)^2);
-              Fr(1,1) = Fr(1,1) - Kr(j)*(rho_r-rho_0(j))*(xt-xo(j))*(1/rho_r);
-              Fr(2,1) = Fr(2,1) - Kr(j)*(rho_r-rho_0(j))*(yt-yo(j))*(1/rho_r);
-         end 
-        
-    end 
+                 Fr(1,1) = Fr(1,1) - Kr(j)*(rho_r-rho_0(j))*(xt-xo(j))*(1/rho_r);
+                Fr(2,1) = Fr(2,1) - Kr(j)*(rho_r-rho_0(j))*(yt-yo(j))*(1/rho_r);
+            end     
+        end 
+    end
     fprintf('Fr\n')
     disp(Fr)
     % Damping force (Fd)
@@ -30,9 +31,15 @@ function [xt, yt, vx, vy, vr, Fa, Fr, Fd, Fx, Fy, rho_r] = apf(xt, yt, vx, vy, X
     Fd(2,1) = -Kdamp*vy;
     fprintf('Fd\n')
     disp(Fd)
+    % Attractive force to other robots
+    Far = zeros(2,1);
+%     Far(1,1) = -Ka*(xt2-(xt+0.5));
+%     Far(2,1) = -Ka*(yt2-(yt+0.5));
+    % Repulsive force to other robots
+%     Frr = zeros(2,1);
     % Total force (F)
-    Fy = Fa(2,1) + sum(Fr(2,1)) + Fd(2,1);
-    Fx = Fa(1,1) + sum(Fr(1,1)) + Fd(1,1);
+    Fy = Fa(2,1) + sum(Fr(2,1)) + Fd(2,1) + Far(2,1);
+    Fx = Fa(1,1) + sum(Fr(1,1)) + Fd(1,1) + Far(1,1);
     F(1,1) = Fx;
     F(2,1) = Fy;
     fprintf('Fx\n')
