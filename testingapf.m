@@ -2,11 +2,11 @@
 
 function [xt, yt, vx, vy, vr, Fa, Fr, Fd, Fx, Fy, rho_r] = testingapf(xt, yt, vx, vy, Xg, Yg, xo, yo, noo, Ka, Kr, Kdamp, m, rho_0, dt, xt2, yt2)
 
-n= 17;
+n= 15;
 C = 0;
-alpha = 22;
-phi_0 = atan2(xt-Xg,yt-Yg);
-phi_1 = atan2(xo-xt, yo-yt);
+alpha = 14;
+phi_0 = atan2(Yg-yt,Xg-xt);
+phi_1 = atan2(yt-yo, xt-xo);
 glorg = mod(phi_1-phi_0, 2*pi);
 if mod(phi_1-phi_0, 2*pi) > (pi)
     C = 1
@@ -36,11 +36,11 @@ end
               Rf = C*alpha*(-sin(phi_1));
               fprintf("psi + rf = ");
               disp(psi+Rf);
-              Fr(1,1) =  Fr(1,1) - psi + Rf;
+              Fr(1,1) = psi + Rf;
                   %Fr(2,1) = Fr(2,1) - Kr(j)*(rho_r-rho_0(j))*(yt-yo(j))*(1/rho_r);
               psi = (n*exp(abs(rho_0(j)-rho_r)))*sin(phi_1);  
               Rf = C*alpha*(cos(phi_1));
-              Fr(2,1) = Fr(2,1) - psi + Rf;
+              Fr(2,1) = psi + Rf;
               
 %               if Fa == Fr
 %                   Fr = Fr + 1;
