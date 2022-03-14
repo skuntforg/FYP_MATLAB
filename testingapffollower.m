@@ -2,11 +2,11 @@
 
 function [xt, yt, vx, vy, vr, Fa, Fr, Fd, Fx, Fy, rho_r, Far, phi_1] = testingapffollower(xt, yt, vx, vy, Xg, Yg, xo, yo, noo, Ka, Kr, Kdamp, m, rho_0, dt, xt2, yt2, xt3, yt3, dx, dy)
 
-n = 0.08;
+n = 15;
 C = 0;
-alpha = 1;
-phi_0 = atan2(xt2-xt, yt2-yt);
-phi_1 = atan2((xt-xo), (yt-yo)) + 3.14;
+alpha = 14;
+phi_0 = atan2(yt2-yt, xt2-xt);
+phi_1 = atan2((yt-yo), (xt-xo));
 fprintf("phi_1 from testingfollower =");
 disp(phi_1)
 if mod(phi_1-phi_0, 2*pi) > (pi)
@@ -20,8 +20,8 @@ Kar = 70;
 % Calculate the conservative forces
     % Attractive force (Fa)
     Fa = zeros(2,1);
-%     Fa(1,1) = -Ka*(xt-Xg);
-%     Fa(2,1) = -Ka*(yt-Yg);
+    Fa(1,1) = -Ka*(xt-Xg);
+    Fa(2,1) = -Ka*(yt-Yg);
     fprintf('Fa\n')
     disp(Fa)
     % Repulsive force (Fr)
@@ -53,9 +53,9 @@ Kar = 70;
     disp(Fd)
     % Attractive force to other robots
     Far = zeros(2,1);
-    Far(1,1) = -Kar*((xt-xt2)/(abs(xt-xt2))*(1-dx/(abs(xt-xt2))));
-    Far(2,1) = -Kar*((yt-yt2)/(abs(yt-yt2))*(1-dy/(abs(yt-yt2))));
-    % Repulsive force to other robots
+%     Far(1,1) = -Kar*((xt-xt2)/(abs(xt-xt2))*(1-dx/(abs(xt-xt2))));
+%     Far(2,1) = -Kar*((yt-yt2)/(abs(yt-yt2))*(1-dy/(abs(yt-yt2))));
+%     % Repulsive force to other robots
 %     Frr = zeros(2,1);
     % Total force (F)
     Fy = Fa(2,1) + sum(Fr(2,1)) + Fd(2,1) + Far(2,1);
