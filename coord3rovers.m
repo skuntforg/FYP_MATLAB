@@ -32,9 +32,9 @@ Omega_mod3 = zeros(1,4); % Intialise wheel rotational velocity vector
 unmatched = zeros(3,1);
 
 simtime = 0;                % Simulation timer, s
-maxtime = 50;             % Upper simulation timer limit, s
+maxtime = 40;             % Upper simulation timer limit, s
 
-dt = 0.001;                  % Simulation time segments, s=0.001
+dt = 0.01;                  % Simulation time segments, s=0.001
 i = 2;
 Kp = 2.3;                     %proportional gain    2.3
 Ki = 3.5;                      %integral gain 2.5    
@@ -56,6 +56,7 @@ deltapsi = [0 0 0];
 dvelocity = [0 0 0];
 rho = [0 0 0];
 resultant_v = [0 0 0];
+rho_rr = 0;
 
 %% Define the artificial potential field parameters
 % number of rovers
@@ -64,26 +65,33 @@ nor = 3;
 Xg = 10;  %10,1
 Yg = 10;
 % Location of obstacles
-noo = 1;
-xo = [3];
-yo = [5];
+noo = 2;
+% xo = [1.5 2.5 2.5 1.5 1];
+% yo = [1.5 2.5 3.5 4.5 5.5];
+xo = [16 13];
+yo = [16 14];
+% xo = [4.1 4.1];
+% yo = [4 5.8];
 %Radius of obstacles (rho_0)
-rho_0 = [1.5];
+rho_0 = [1.5 1.5];
+% rho_0 = [1 0.5];
 % Constants.
-Ka = 1.5; 
-Kr = [4000]
+Ka = 1.5;     %1.5
+Kr = [50000 20000]    %5500 5000
 Kdamp = 50;
 m = 2.148;
-dxi = 0.5;  % distance in x of robot i from leader
-dyi = 1;  %distance in y of robot i from leader
+dxi = 1.5;  % distance in x of robot i from leader
+dyi = 3;  %distance in y of robot i from leader
 dxj = 2;  % distance in x of robot j from robot i
 dyj = 1.5;  % distance in y of robot j from robot i
 %position and velocities (theoretical)
 vx = [0 0 0];
 vy = [0 0 0];
 vr = [0 0 0];
-xt = [0 1 -1];
-yt = [0 -5 5];
+xt = [0 -1.5 -2];   % 1 -1
+yt = [0 -3 5];   % -5 5
+% xt = [0 -1 0];   
+% yt = [0 -1 1];   
 
 % Store variables for later assessment
 traj = [];
@@ -139,16 +147,23 @@ Fx_mod2(1,:) = zeros(2,1);
 Fa_mod3(1,:) = zeros(2,1);
 Fr_mod3(1,:) = zeros(2,1);
 Fy_mod3(1,:) = zeros(2,1);
-Fx_mod3(1,:) = zeros(2,1)
+Fx_mod3(1,:) = zeros(2,1);
 vr_mod(1,:) = vr;
-Far_mod(1,:) = zeros(2,1)
+Far_mod(1,:) = zeros(2,1);
+Frr1_mod(1,:) = zeros(2,1);
+Frr2_mod(1,:) = zeros(2,1);
+Frr12_mod(1,:) = zeros(2,1);
+Frr22_mod(1,:) = zeros(2,1);
+rhorr_mod(1,:) = rho_rr;
 
 % INITIALISE POSITION IF NOT ZERO`
  x_mod(7) = 0;
  x_mod(8) = 0;
- x_mod2(7) = 1; %ensure same value in xt and yt for initial position!
- x_mod2(8) = -5;
- x_mod3(7) = -1;
+ x_mod2(7) = -1.5;
+ x_mod2(8) = -3;
+%  x_mod2(7) = -1.5;         %ensure same value in xt and yt for initial position!
+%  x_mod2(8) = -3;
+ x_mod3(7) = -2;
  x_mod3(8) = 5;
 
 %--------------------------------------------------------------------------
@@ -164,11 +179,11 @@ for simtime = 0:dt:maxtime
    
  %% Calculate the conservative forces
  
-    [xt(1,1), yt(1,1), vx(1,1), vy(1,1), vr(1,1), Fa, Fr, Fd, Fx, Fy, rho_r(1,1)] = apf(xt(1,1), yt(1,1), vx(1,1), vy(1,1), Xg, Yg, xo, yo, noo, Ka, Kr, Kdamp, m, rho_0, dt);
+    [xt(1,1), yt(1,1), vx(1,1), vy(1,1), vr(1,1), Fa, Fr, Fd, Fx, Fy, rho_r(1,1)] = apf(xt(1,1), yt(1,1), vx(1,1), vy(1,1), Xg, Yg, xo, yo, noo, Ka, Kr, Kdamp, m, rho_0, dt, xt(1,2), yt(1,2), xt(1,3), yt(1,3));
     
-    [xt(1,2), yt(1,2), vx(1,2), vy(1,2), vr(1,2), Fa2, Fr2, Fd2, Fx2, Fy2, rho_r(1,2), Far] = apffollower(xt(1,2), yt(1,2), vx(1,2), vy(1,2), Xg, Yg, xo, yo, noo, Ka, Kr, Kdamp, m, rho_0, dt, xt(1,1), yt(1,1), dxi, dyi);
+    [xt(1,2), yt(1,2), vx(1,2), vy(1,2), vr(1,2), Fa2, Fr2, Fd2, Fx2, Fy2, rho_r(1,2), Far, Frr1, Frr2, rho_rr] = apffollower(xt(1,2), yt(1,2), vx(1,2), vy(1,2), Xg, Yg, xo, yo, noo, Ka, Kr, Kdamp, m, rho_0, dt, xt(1,1), yt(1,1), dxi, dyi, xt(1,1), yt(1,1));
     
-    [xt(1,3), yt(1,3), vx(1,3), vy(1,3), vr(1,3), Fa3, Fr3, Fd3, Fx3, Fy3, rho_r(1,3)] = apffollower(xt(1,3), yt(1,3), vx(1,3), vy(1,3), Xg, Yg, xo, yo, noo, Ka, Kr, Kdamp, m, rho_0, dt, xt(1,2), yt(1,2), dxj, dyj);
+    [xt(1,3), yt(1,3), vx(1,3), vy(1,3), vr(1,3), Fa3, Fr3, Fd3, Fx3, Fy3, rho_r(1,3), Far, Frr12, Frr22, rho_rr] = apffollower(xt(1,3), yt(1,3), vx(1,3), vy(1,3), Xg, Yg, xo, yo, noo, Ka, Kr, Kdamp, m, rho_0, dt, xt(1,2), yt(1,2), dxj, dyj, xt(1,1), yt(1,1));
 % =========================================================================
 % Run the rover model
     
@@ -213,7 +228,7 @@ for simtime = 0:dt:maxtime
     Vout2(i,:) = V2;
     Vout3(i,:) = V3;
     time(i) = simtime;
-    psid_mod(i,:) = psid;
+     psid_mod(i,:) = psid;
     deltapsi_mod(i,:) = deltapsi;
     deltav_mod(i,:) = deltav;
     dvelocity_mod(i,:) = dvelocity;
@@ -238,6 +253,11 @@ for simtime = 0:dt:maxtime
     Fx3_mod(i,:) = Fx3;
     Fy3_mod(i,:) = Fy3;
     Far_mod(i,:) = Far;
+    Frr1_mod(i,:) = Frr1;
+    Frr2_mod(i,:) = Frr2;
+    Frr12_mod(i,:) = Frr12;
+    Frr22_mod(i,:) = Frr22;
+    rhorr_mod(i,:) = rho_rr;
 
 
 % -------------------------------------------------------------------------
@@ -247,7 +267,7 @@ for simtime = 0:dt:maxtime
      
     %VELOCITY controller - resultant
     rho(1,1) = sqrt((Xg-x_mod(7))^2+(Yg-x_mod(8))^2);
-    if rho(1,1) <= 0.2
+    if rho(1,1) <= 0.1
         dvelocity(1,1) = 0;                             %desired surge velocity
     else
         dvelocity(1,1) = vr(1,1);
@@ -380,121 +400,121 @@ plot(xout_mod(:,8),xout_mod(:,7))
 xlabel('y_pos [m]')
 ylabel('x_pos [m]')
 
-figure(2);
+% figure(2);
+% subplot(4,2,1)
+% plot(time,xout_mod(:,1))
+% xlabel('time [s]')
+% ylabel('surge [m/s]')
+% subplot(4,2,2)
+% plot(time,xout_mod(:,2))
+% xlabel('time [s]')
+% ylabel('sway [m/s]')
+% subplot(4,2,3)
+% plot(time,xout_mod(:,6)*180/pi)
+% xlabel('time [s]')
+% ylabel('yaw rate [m/s]')
+% subplot(4,2,4)
+% plot(time,xout_mod(:,12)*180/pi)
+% xlabel('time [s]')
+% ylabel('psi [degrees]') 
+% subplot(4,4,9)
+% plot(time,Vout(:,1))
+% xlabel('time [s]')
+% ylabel('V1 [V]')
+% subplot(4,4,10)
+% plot(time,Vout(:,2))
+% xlabel('time [s]')
+% ylabel('V2 [V]')
+% subplot(4,4,13)
+% plot(time,Vout(:,3))
+% xlabel('time [s]')
+% ylabel('V3 [V]')
+% subplot(4,4,14)
+% plot(time,Vout(:,4))
+% xlabel('time [s]')
+% ylabel('V4 [V]')
+% subplot(2,2,4)
+% plot(xout_mod(:,8),xout_mod(:,7))
+% xlabel('y_pos [m]')
+% ylabel('x_pos [m]')
+
+figure(3);
+title("rover 2")
 subplot(4,2,1)
-plot(time,xout_mod(:,1))
+plot(time,xout_mod2(:,1))
 xlabel('time [s]')
 ylabel('surge [m/s]')
 subplot(4,2,2)
-plot(time,xout_mod(:,2))
+plot(time,xout_mod2(:,2))
 xlabel('time [s]')
 ylabel('sway [m/s]')
 subplot(4,2,3)
-plot(time,xout_mod(:,6)*180/pi)
+plot(time,xout_mod2(:,6)*180/pi)
 xlabel('time [s]')
 ylabel('yaw rate [m/s]')
 subplot(4,2,4)
-plot(time,xout_mod(:,12)*180/pi)
+plot(time,xout_mod2(:,12)*180/pi)
 xlabel('time [s]')
 ylabel('psi [degrees]') 
 subplot(4,4,9)
-plot(time,Vout(:,1))
+plot(time,Vout2(:,1))
 xlabel('time [s]')
 ylabel('V1 [V]')
 subplot(4,4,10)
-plot(time,Vout(:,2))
+plot(time,Vout2(:,2))
 xlabel('time [s]')
 ylabel('V2 [V]')
 subplot(4,4,13)
-plot(time,Vout(:,3))
+plot(time,Vout2(:,3))
 xlabel('time [s]')
 ylabel('V3 [V]')
 subplot(4,4,14)
-plot(time,Vout(:,4))
+plot(time,Vout2(:,4))
 xlabel('time [s]')
 ylabel('V4 [V]')
 subplot(2,2,4)
-plot(xout_mod(:,8),xout_mod(:,7))
+plot(xout_mod2(:,8),xout_mod2(:,7))
 xlabel('y_pos [m]')
 ylabel('x_pos [m]')
 
-% figure(3);
-% title("rover 2")
-% subplot(4,2,1)
-% plot(time,xout_mod2(:,1))
-% xlabel('time [s]')
-% ylabel('surge [m/s]')
-% subplot(4,2,2)
-% plot(time,xout_mod2(:,2))
-% xlabel('time [s]')
-% ylabel('sway [m/s]')
-% subplot(4,2,3)
-% plot(time,xout_mod2(:,6)*180/pi)
-% xlabel('time [s]')
-% ylabel('yaw rate [m/s]')
-% subplot(4,2,4)
-% plot(time,xout_mod2(:,12)*180/pi)
-% xlabel('time [s]')
-% ylabel('psi [degrees]') 
-% subplot(4,4,9)
-% plot(time,V2out(:,1))
-% xlabel('time [s]')
-% ylabel('V1 [V]')
-% subplot(4,4,10)
-% plot(time,V2out(:,2))
-% xlabel('time [s]')
-% ylabel('V2 [V]')
-% subplot(4,4,13)
-% plot(time,V2out(:,3))
-% xlabel('time [s]')
-% ylabel('V3 [V]')
-% subplot(4,4,14)
-% plot(time,V2out(:,4))
-% xlabel('time [s]')
-% ylabel('V4 [V]')
-% subplot(2,2,4)
-% plot(xout_mod2(:,8),xout_mod2(:,7))
-% xlabel('y_pos [m]')
-% ylabel('x_pos [m]')
-% 
-% figure(4);
-% title("rover 3")
-% subplot(4,2,1)
-% plot(time,xout_mod3(:,1))
-% xlabel('time [s]')
-% ylabel('surge [m/s]')
-% subplot(4,2,2)
-% plot(time,xout_mod3(:,2))
-% xlabel('time [s]')
-% ylabel('sway [m/s]')
-% subplot(4,2,3)
-% plot(time,xout_mod3(:,6)*180/pi)
-% xlabel('time [s]')
-% ylabel('yaw rate [m/s]')
-% subplot(4,2,4)
-% plot(time,xout_mod3(:,12)*180/pi)
-% xlabel('time [s]')
-% ylabel('psi [degrees]') 
-% subplot(4,4,9)
-% plot(time,V3out(:,1))
-% xlabel('time [s]')
-% ylabel('V1 [V]')
-% subplot(4,4,10)
-% plot(time,V3out(:,2))
-% xlabel('time [s]')
-% ylabel('V2 [V]')
-% subplot(4,4,13)
-% plot(time,V3out(:,3))
-% xlabel('time [s]')
-% ylabel('V3 [V]')
-% subplot(4,4,14)
-% plot(time,V3out(:,4))
-% xlabel('time [s]')
-% ylabel('V4 [V]')
-% subplot(2,2,4)
-% plot(xout_mod3(:,8),xout_mod3(:,7))
-% xlabel('y_pos [m]')
-% ylabel('x_pos [m]')
+figure(4);
+title("rover 3")
+subplot(4,2,1)
+plot(time,xout_mod3(:,1))
+xlabel('time [s]')
+ylabel('surge [m/s]')
+subplot(4,2,2)
+plot(time,xout_mod3(:,2))
+xlabel('time [s]')
+ylabel('sway [m/s]')
+subplot(4,2,3)
+plot(time,xout_mod3(:,6)*180/pi)
+xlabel('time [s]')
+ylabel('yaw rate [m/s]')
+subplot(4,2,4)
+plot(time,xout_mod3(:,12)*180/pi)
+xlabel('time [s]')
+ylabel('psi [degrees]') 
+subplot(4,4,9)
+plot(time,Vout3(:,1))
+xlabel('time [s]')
+ylabel('V1 [V]')
+subplot(4,4,10)
+plot(time,Vout3(:,2))
+xlabel('time [s]')
+ylabel('V2 [V]')
+subplot(4,4,13)
+plot(time,Vout3(:,3))
+xlabel('time [s]')
+ylabel('V3 [V]')
+subplot(4,4,14)
+plot(time,Vout3(:,4))
+xlabel('time [s]')
+ylabel('V4 [V]')
+subplot(2,2,4)
+plot(xout_mod3(:,8),xout_mod3(:,7))
+xlabel('y_pos [m]')
+ylabel('x_pos [m]')
 
 
 figure(5)
@@ -537,8 +557,8 @@ plot(traj(2,1),traj(1,1),'bo','LineWidth',6);
 plot(traj2(2,1),traj2(1,1),'bo','LineWidth',6);
 plot(traj3(2,1),traj3(1,1),'bo','LineWidth',6);
 plot(Yg,Xg,'bx','LineWidth',10);
-xlabel('y(m)');
-ylabel('x(m)');
+xlabel('y(m)', 'FontSize', 16);
+ylabel('x(m)', 'FontSize', 16);
 axis('equal');
 % Now the repulsive potential contour
 ........
@@ -568,7 +588,7 @@ plot(traj3(2,:),traj3(1,:),'b','LineWidth',1.5)
 hold off;
 axis equal;
 axis tight; 
-
+set(gca,'FontSize',14)
 % Plot the theoretical trajectory
 figure(7);
 subplot(2,1,1)
@@ -598,14 +618,28 @@ legend('vx', 'vy')
 % plot(yt_mod(:,1))
 % legend('yt')
 
-% figure 
+figure 
 % p = 0.5*Ka*((X-Xg).^2+(Y-Yg).^2);
-%  rho_r = sqrt((X-xo).^2+(Y-yo).^2);
-%  q= 0.5*Kr*((1./rho_r-1./rho_0).^2);  %CHANGE THIS BACK TO THE RIGHT FIELD AS IN FR CALC
+% rho_r1 = sqrt((X-xo(1)).^2+(Y-yo(2)).^2);
+% q1= 0.5*Kr(1)*((1./rho_r1-1./rho_0(1)).^2);  %CHANGE THIS BACK TO THE RIGHT FIELD AS IN FR CALC
 % mesh(X,Y,p)
 %  figure
-%  mesh(X,Y,q)
+%  mesh(X,Y,q1+p)
 %  figure
 %  mesh(X,Y,p+q)
+
+figure 
+p = 0.5*Ka*((X-Xg).^2+(Y-Yg).^2);
+mesh(X,Y,p);
+
+q = 0
+for n=1:noo
+    
+    rho_r = sqrt((X-xo(n)).^2+(Y-yo(n)).^2);
+    q = q + 0.5*Kr(n)*((1./rho_r-1./rho_0(n)).^2);  %CHANGE THIS BACK TO THE RIGHT FIELD AS IN FR CALC
+    
+end 
+
+mesh(X, Y, q+p)
 
 
